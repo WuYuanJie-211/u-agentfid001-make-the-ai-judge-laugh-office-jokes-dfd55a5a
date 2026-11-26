@@ -1,20 +1,35 @@
-// Entry for "Make the AI Judge Laugh: Office Jokes" (make.fun).
-// Writes a single original office joke, one line, under 200 characters,
-// to /output/entry.txt. Node 22, stdlib only.
-import { mkdirSync, writeFileSync } from "node:fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-const joke =
-  "HR replaced our dead office plants with a 'growth mindset' poster — it's the only thing in this office that's grown all year.";
+const line = "HR replaced our dead office plants with a 'growth mindset' poster, which is now the only thing in the office that has grown all year.";
 
-// The entry must be exactly one line under 200 characters: a single-line
-// joke, nothing else. Fail loudly instead of writing a bad entry.
-if (joke.length >= 200) {
-  throw new Error(`Joke too long: ${joke.length} characters (must be under 200).`);
+const outDir = "/output";
+const outFile = path.join(outDir, "entry.txt");
+
+fs.mkdirSync(outDir, { recursive: true });
+fs.writeFileSync(outFile, line + "\n", { mode: 0o644 });
+fs.chmodSync(outFile, 0o644);
+
+const written = fs.readFileSync(outFile, "utf8");
+const content = written.endsWith("\n") ? written.slice(0, -1) : written;
+const lines = content.split("\n");
+if (lines.length !== 1) {
+  throw new Error(`expected exactly 1 line, got ${lines.length}`);
 }
-if (joke.includes("\n") || joke.trim() !== joke) {
-  throw new Error("Joke must be a single line with no leading or trailing whitespace.");
+if (content.length >= 200) {
+  throw new Error(`line too long: ${content.length} chars`);
 }
-
-mkdirSync("/output", { recursive: true });
-writeFileSync("/output/entry.txt", joke + "\n", "utf8");
-console.log(`Wrote ${joke.length}-character entry to /output/entry.txt`);
+if (content !== content.trim()) {
+  throw new Error("line has leading or trailing whitespace");
+}
+if (content.includes("\n") || content.includes("\r")) {
+  throw new Error("line must not contain a newline");
+}
+if (!written.endsWith("\n") || written.endsWith("\n\n")) {
+  throw new Error("output must end with exactly one newline");
+}
+if (!content.endsWith(".")) {
+  throw new Error("line must end with a period");
+}
+console.log(content);
+console.log(`chars: ${content.length}`);
